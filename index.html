@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+  </tbody>  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamSync</title>
+    <link rel="icon" type="image/x-icon" href="android-chrome-192x192-removebg-preview.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xl</button>sx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="active">
+            <div class="sidebar-header">
+                <h3>Sonoplastas IASD</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="#" data-view="members">
+                        <i class="bi bi-people-fill"></i>
+                        Membros
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-view="stats">
+                        <i class="bi bi-graph-up"></i>
+                        Avaliações
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-primary">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="ms-auto">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download"></i> Exportar
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="exportPDF">PDF</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportExcel">Excel</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group ms-2">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-upload"></i> Importar
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <label class="dropdown-item" for="importExcel">
+                                        <input type="file" id="importExcel" accept=".xlsx,.xls" class="d-none">
+                                        Excel
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Views Container -->
+            <div class="container-fluid">
+                <!-- Members View -->
+                <div id="membersView">
+                    <!-- Existing members content -->
+                    <div class="row mb-4">
+                        <div class="col">
+                            <button id="addMemberBtn" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Adicionar Membro
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Members List -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h5 class="mb-0">Membros da Equipe</h5>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="input-group">
+                                                <input type="text" id="searchInput" class="form-control" placeholder="Buscar...">
+                                                <button class="btn btn-outline-secondary" type="button">
+                                                    <i class="bi bi-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Foto</th>
+                                                    <th>Nome</th>
+                                                    <th>Cargo</th>
+                                                    <th>Departamento</th>
+                                                    <th>Email</th>
+                                                    <th>Status</th>
+                                                    <th>Avaliação</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="membersList">
+                                                <!-- Members will be dynamically added here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics View -->
+                <div id="statsView" class="d-none">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Avaliação de Desempenho</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-4">
+                                            <select id="memberSelect" class="form-select">
+                                                <option value="">Selecione um membro...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="month" id="evaluationMonth" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button id="addEvaluationBtn" class="btn btn-primary w-100">
+                                                <i class="bi bi-plus-circle"></i> Nova Avaliação
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <canvas id="performanceChart"></canvas>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <canvas id="skillsChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Form Modal -->
+            <div class="modal fade" id="memberModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Adicionar Membro</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="memberForm">
+                                <div class="row mb-3">
+                                    <div class="col-md-3 text-center">
+                                        <div class="avatar-upload">
+                                            <div class="avatar-preview">
+                                                <div id="imagePreview"></div>
+                                            </div>
+                                            <div class="avatar-edit">
+                                                <input type='file' id="imageUpload" accept=".png, .jpg, .jpeg" />
+                                                <label for="imageUpload">Escolher Foto</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nome Completo</label>
+                                            <input type="text" class="form-control" name="fullName" required>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Função Principal</label>
+                                                    <select class="form-select" name="position" required>
+                                                        <option value="mixer">Operador de Mesa</option>
+                                                        <option value="monitor">Monitor de Palco</option>
+                                                        <option value="microphone">Microfonista</option>
+                                                        <option value="multimedia">Multimídia</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Experiência</label>
+                                                    <select class="form-select" name="experience" required>
+                                                        <option value="trainee">Em Treinamento</option>
+                                                        <option value="junior">Júnior</option>
+                                                        <option value="senior">Sênior</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" name="email" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Telefone</label>
+                                            <input type="tel" class="form-control" name="phone" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Data de Início</label>
+                                            <input type="date" class="form-control" name="startDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" name="status" required>
+                                                <option value="active">Ativo</option>
+                                                <option value="inactive">Inativo</option>
+                                                <option value="training">Em Treinamento</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Observações</label>
+                                    <textarea class="form-control" name="notes" rows="3"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="saveMemberBtn">Adicionar Membro</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Modal -->
+            <div class="modal fade" id="evaluationModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Nova Avaliação</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="evaluationForm">
+                                <div class="mb-4">
+                                    <h6>Habilidades Técnicas</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Operação da Mesa de Som</label>
+                                        <div class="rating">
+                                            <input type="radio" name="mixerOperation" value="5" id="mo5"><label for="mo5">★</label>
+                                            <input type="radio" name="mixerOperation" value="4" id="mo4"><label for="mo4">★</label>
+                                            <input type="radio" name="mixerOperation" value="3" id="mo3"><label for="mo3">★</label>
+                                            <input type="radio" name="mixerOperation" value="2" id="mo2"><label for="mo2">★</label>
+                                            <input type="radio" name="mixerOperation" value="1" id="mo1"><label for="mo1">★</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Operação do computador</label>
+                                        <div class="rating">
+                                            <input type="radio" name="equalization" value="5" id="eq5"><label for="eq5">★</label>
+                                            <input type="radio" name="equalization" value="4" id="eq4"><label for="eq4">★</label>
+                                            <input type="radio" name="equalization" value="3" id="eq3"><label for="eq3">★</label>
+                                            <input type="radio" name="equalization" value="2" id="eq2"><label for="eq2">★</label>
+                                            <input type="radio" name="equalization" value="1" id="eq1"><label for="eq1">★</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Equalização</label>
+                                        <div class="rating">
+                                            <input type="radio" name="feedback" value="5" id="fb5"><label for="fb5">★</label>
+                                            <input type="radio" name="feedback" value="4" id="fb4"><label for="fb4">★</label>
+                                            <input type="radio" name="feedback" value="3" id="fb3"><label for="fb3">★</label>
+                                            <input type="radio" name="feedback" value="2" id="fb2"><label for="fb2">★</label>
+                                            <input type="radio" name="feedback" value="1" id="fb1"><label for="fb1">★</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <h6>Habilidades Práticas</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Atuação nas programações</label>
+                                        <div class="rating">
+                                            <input type="radio" name="systemPrep" value="5" id="sp5"><label for="sp5">★</label>
+                                            <input type="radio" name="systemPrep" value="4" id="sp4"><label for="sp4">★</label>
+                                            <input type="radio" name="systemPrep" value="3" id="sp3"><label for="sp3">★</label>
+                                            <input type="radio" name="systemPrep" value="2" id="sp2"><label for="sp2">★</label>
+                                            <input type="radio" name="systemPrep" value="1" id="sp1"><label for="sp1">★</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Resolução de Problemas</label>
+                                        <div class="rating">
+                                            <input type="radio" name="problemSolving" value="5" id="ps5"><label for="ps5">★</label>
+                                            <input type="radio" name="problemSolving" value="4" id="ps4"><label for="ps4">★</label>
+                                            <input type="radio" name="problemSolving" value="3" id="ps3"><label for="ps3">★</label>
+                                            <input type="radio" name="problemSolving" value="2" id="ps2"><label for="ps2">★</label>
+                                            <input type="radio" name="problemSolving" value="1" id="ps1"><label for="ps1">★</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <h6>Habilidades Interpessoais</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Trabalho em Equipe</label>
+                                        <div class="rating">
+                                            <input type="radio" name="teamwork" value="5" id="tw5"><label for="tw5">★</label>
+                                            <input type="radio" name="teamwork" value="4" id="tw4"><label for="tw4">★</label>
+                                            <input type="radio" name="teamwork" value="3" id="tw3"><label for="tw3">★</label>
+                                            <input type="radio" name="teamwork" value="2" id="tw2"><label for="tw2">★</label>
+                                            <input type="radio" name="teamwork" value="1" id="tw1"><label for="tw1">★</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Pontualidade</label>
+                                        <div class="rating">
+                                            <input type="radio" name="punctuality" value="5" id="pu5"><label for="pu5">★</label>
+                                            <input type="radio" name="punctuality" value="4" id="pu4"><label for="pu4">★</label>
+                                            <input type="radio" name="punctuality" value="3" id="pu3"><label for="pu3">★</label>
+                                            <input type="radio" name="punctuality" value="2" id="pu2"><label for="pu2">★</label>
+                                            <input type="radio" name="punctuality" value="1" id="pu1"><label for="pu1">★</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Observações da Avaliação</label>
+                                    <textarea class="form-control" name="evaluationNotes" rows="3"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="saveEvaluationBtn">Salvar Avaliação</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
