@@ -250,86 +250,174 @@ function updateCharts() {
 }
 
 // Export/Import Functions
+// Função para calcular a média das avaliações de um membro
+function calculateAverageRating(memberEvaluations) {
+    if (!memberEvaluations || memberEvaluations.length === 0) return "Não avaliado";
+
+    const latestEvaluation = memberEvaluations[memberEvaluations.length - 1];
+    const ratings = Object.values(latestEvaluation.ratings);
+
+    if (ratings.length === 0) return "Não avaliado";
+
+    const sum = ratings.reduce((acc, val) => acc + val, 0);
+    return (sum / ratings.length).toFixed(1);
+}
+
+// Função para exportar relatório em PDF
 exportPDF.addEventListener('click', () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(16);
-    doc.text('Relatório de Sonoplastas - IASD', 20, 20);
-    
-    let yPos = 40;
-    members.forEach(member => {
-        doc.setFontSize(12);
-        doc.text(`Nome: ${member.fullName}`, 20, yPos);
-        doc.text(`Função: ${member.position}`, 20, yPos + 7);
-        doc.text(`Status: ${member.status}`, 20, yPos + 14);
-        
-        const memberEvaluations = evaluations.filter(e => e.memberId === member.id);
-        if (memberEvaluations.length > 0) {
-            const latest = memberEvaluations[memberEvaluations.length - 1];
-            const avgRating = Object.values(latest.ratings)
-                .reduce((sum, val) => sum + val, 0) / Object.values(latest.ratings).length;
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // PDF Header
+        const currentDate = new Date().toLocaleString('pt-BR');
+        doc.setFillColor(52, 152, 219);
+        doc.rect(0, 0, 210, 30, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20);
+        doc.text('Relatório de Sonoplastas - IASD', 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Exportado em: ${currentDate}`, 20, 27);
+
+        let yPos = 50;
+
+        // Content
+        members.forEach((member, index) => {
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(`${index + 1}. ${member.fullName || 'Não informado'}`, 20, yPos);
             
-            doc.text(`Avaliação Média: ${avgRating.toFixed(1)}/5`, 20, yPos + 21);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Função: ${getPositionLabel(member.position)}`, 30, yPos + 7);
+            doc.text(`Status: ${getStatusLabel(member.status)}`, 30, yPos + 14);
+
+            const memberEvaluations = evaluations.filter(e => e.memberId === member.id);
+            const avgRating = calculateAverageRating(memberEvaluations);
+
+            // Rating box
+            doc.setFillColor(240, 240, 240);
+            doc.roundedRect(150, yPos - 5, 40, 20, 3, 3, 'F');
+            doc.setFontSize(14);
+            doc.text(`★ ${avgRating}`, 160, yPos + 7);
+
+            // Separator line
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, yPos + 25, 190, yPos + 25);
+
+            yPos += 35;
+
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+        });
+
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Página ${i} de ${pageCount}`, 20, 290);
         }
-        
-        yPos += 35;
-        
-        if (yPos > 250) {
-            doc.addPage();
-            yPos = 20;
-        }
-    });
-    
-    doc.save('sonoplastas-relatorio.pdf');
+
+        doc.save(`sonoplastas-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
+    }
 });
 
-exportExcel.addEventListener('click', () => {
-    const wb = XLSX.utils.book_new();
-    
-    // Members Sheet
-    const membersData = members.map(m => ({
-        Nome: m.fullName,
-        Função: m.position,
-        Email: m.email,
-        Telefone: m.phone,
-        Status: m.status,
-        'Data de Início': m.startDate
-    }));
-    const memberWs = XLSX.utils.json_to_sheet(membersData);
-    XLSX.utils.book_append_sheet(wb, memberWs, 'Membros');
-    
-    // Evaluations Sheet
-    const evaluationsData = evaluations.map(e => {
-        const member = members.find(m => m.id === e.memberId);
-        return {
-            Membro: member?.fullName || '',
-            Mês: e.month,
-            'Operação da Mesa': e.ratings.mixerOperation,
-            Equalização: e.ratings.equalization,
-            Microfonia: e.ratings.feedback,
-            'Preparação do Sistema': e.ratings.systemPrep,
-            'Resolução de Problemas': e.ratings.problemSolving,
-            'Trabalho em Equipe': e.ratings.teamwork,
-            Pontualidade: e.ratings.punctuality,
-            Observações: e.notes
-        };
-    });
-    const evaluationWs = XLSX.utils.json_to_sheet(evaluationsData);
-    XLSX.utils.book_append_sheet(wb, evaluationWs, 'Avaliações');
-    
-    XLSX.writeFile(wb, 'sonoplastas-dados.xlsx');
+// Excel Export with improved structure
+exportExcel.addEventListener('click', async () => {
+    try {
+        // Check if XLSX is available
+        if (typeof XLSX === 'undefined') {
+            await loadXLSX();
+        }
+        const wb = XLSX.utils.book_new();
+        
+        // Summary Sheet
+        const summaryData = [
+            ["Relatório de Sonoplastas - IASD"],
+            ["Exportado em:", new Date().toLocaleString('pt-BR')],
+            [],
+            ["Nome", "Função", "Status", "Avaliação Média", "Email", "Telefone"]
+        ];
+
+        members.forEach(member => {
+            const memberEvaluations = evaluations.filter(e => e.memberId === member.id);
+            const avgRating = calculateAverageRating(memberEvaluations);
+
+            summaryData.push([
+                member.fullName,
+                getPositionLabel(member.position),
+                getStatusLabel(member.status),
+                avgRating,
+                member.email,
+                member.phone
+            ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, ws, "Resumo");
+
+        // Members Detail Sheet
+        const membersData = members.map(m => ({
+            Nome: m.fullName,
+            Função: getPositionLabel(m.position),
+            Email: m.email,
+            Telefone: m.phone,
+            Status: getStatusLabel(m.status),
+            'Data de Início': m.startDate,
+            'Última Atualização': new Date(m.updatedAt).toLocaleString('pt-BR')
+        }));
+        const memberWs = XLSX.utils.json_to_sheet(membersData);
+        XLSX.utils.book_append_sheet(wb, memberWs, 'Membros');
+
+        // Evaluations Sheet
+        const evaluationsData = evaluations.map(e => {
+            const member = members.find(m => m.id === e.memberId);
+            return {
+                Membro: member?.fullName || '',
+                Mês: e.month,
+                'Operação da Mesa': e.ratings.mixerOperation,
+                Equalização: e.ratings.equalization,
+                Microfonia: e.ratings.feedback,
+                'Preparação do Sistema': e.ratings.systemPrep,
+                'Resolução de Problemas': e.ratings.problemSolving,
+                'Trabalho em Equipe': e.ratings.teamwork,
+                Pontualidade: e.ratings.punctuality,
+                Observações: e.notes,
+                'Data da Avaliação': new Date(e.createdAt).toLocaleString('pt-BR')
+            };
+        });
+        const evaluationWs = XLSX.utils.json_to_sheet(evaluationsData);
+        XLSX.utils.book_append_sheet(wb, evaluationWs, 'Avaliações');
+
+        XLSX.writeFile(wb, `sonoplastas-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+        console.error("Erro ao gerar Excel:", error);
+        alert("Ocorreu um erro ao gerar o Excel. Por favor, tente novamente.");
+    }
 });
 
-importExcel.addEventListener('change', (e) => {
+importExcel.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Check if XLSX is available
+    if (typeof XLSX === 'undefined') {
+        await loadXLSX();
+    }
+
     const reader = new FileReader();
+    if (!file) return;
     reader.onload = function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        
         // Import Members
         const membersSheet = workbook.Sheets['Membros'];
         if (membersSheet) {
@@ -467,12 +555,47 @@ function editMember(id) {
     }
 }
 
+document.addEventListener("DOMContentLoaded", function() {
+    const selectExperience = document.querySelector('select[name="experience"]');
+    const colors = {
+        trainee: "blue",
+        junior: "green",
+        senior: "red"
+    };
+
+    // Restaurar valor salvo no Local Storage
+    const savedExperience = localStorage.getItem("selectedExperience");
+    if (savedExperience) {
+        selectExperience.value = savedExperience;
+        selectExperience.style.color = colors[savedExperience] || "black";
+    }
+
+    // Alterar cor ao mudar a seleção e salvar no Local Storage
+    selectExperience.addEventListener('change', function() {
+        const selectedValue = this.value;
+        this.style.color = colors[selectedValue] || "black";
+        localStorage.setItem("selectedExperience", selectedValue); // Salvar no Local Storage
+    });
+});
+
+
 function deleteMember(id) {
     if (confirm('Tem certeza que deseja excluir este membro?')) {
         members = members.filter(m => m.id !== id);
-        evaluations = evaluations.filter(e => e.memberId !== id);
-        saveMembers();
-        localStorage.setItem('evaluations', JSON.stringify(evaluations));
+function saveMembers() {
+    localStorage.setItem('members', JSON.stringify(members));
+}
+
+// Function to load XLSX library dynamically
+async function loadXLSX() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load XLSX library'));
+        document.head.appendChild(script);
+    });
+}
         renderMembers();
         updateMemberSelect();
         updateCharts();
