@@ -558,7 +558,7 @@ function editMember(id) {
 document.addEventListener("DOMContentLoaded", function() {
     const selectExperience = document.querySelector('select[name="experience"]');
     const colors = {
-        trainee: "blue",
+        Aprendendo: "blue",
         junior: "green",
         senior: "red"
     };
@@ -617,10 +617,8 @@ function getStatusLabel(status) {
 
 function getPositionLabel(position) {
     const labels = {
-        mixer: 'Operador de Mesa',
-        monitor: 'Monitor de Palco',
-        microphone: 'Microfonista',
-        multimedia: 'Multimídia'
+        mixer: '<span style="color: #2980b9; font-weight: bold;">Sonoplasta</span>',
+        monitor: '<span style="color: #e74c3c; font-weight: bold;">Música + Sonoplasta</span>',
     };
     return labels[position] || position;
 }
