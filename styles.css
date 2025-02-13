@@ -226,12 +226,10 @@
     color: #000;
 }
 
-/* Rating Badge */
 .rating {
     display: flex;
-    flex-direction: row;
-    justify-content: flex-start; /* Alinha à esquerda */
-    gap: 5px;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 .rating input {
@@ -239,10 +237,14 @@
 }
 
 .rating label {
-    font-size: 2rem;
     cursor: pointer;
-    color: #ccc;
-    transition: transform 0.2s, color 0.2s;
+    width: 25px;
+    height: 25px;
+    margin: 0;
+    padding: 0;
+    font-size: 25px;
+    line-height: 25px;
+    color: #ddd;
 }
 
 .rating label:before {
@@ -251,24 +253,13 @@
 
 .rating input:checked ~ label {
     color: #ffd700;
-    transform: scale(1.2);
-    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
 }
 
 .rating label:hover,
 .rating label:hover ~ label {
-    color: #ffeb3b;
-    transform: scale(1.2) rotate(5deg);
+    color: #ffd700;
 }
 
-.rating:hover label {
-    animation: bounce 0.3s ease;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
 
 /* Charts */
 canvas {
