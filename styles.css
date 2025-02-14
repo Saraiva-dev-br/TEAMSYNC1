@@ -196,11 +196,30 @@
 }
 
 .member-avatar {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 2px 4px rgba(4, 36, 134, 0.768);
+    box-shadow: 0 4px 8px rgba(4, 36, 134, 0.3);
+    border: 3px solid #fff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    filter: brightness(0.95);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.member-avatar:hover {
+    transform: scale(1.15) rotate(2deg);
+    box-shadow: 0 6px 15px rgba(4, 36, 134, 0.4);
+    border-color: #3498db;
+    filter: brightness(1.05);
+    z-index: 1;
+}
+
+.member-avatar:active {
+    transform: scale(1.05);
+    transition-duration: 0.1s;
 }
 
 /* Status Badges */
